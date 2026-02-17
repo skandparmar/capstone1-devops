@@ -1,36 +1,27 @@
 pipeline {
     agent any
 
-    environment {
-        IMAGE_NAME = "capstone1-webapp"
-    }
-
     stages {
-
-        stage('Build') {
+        stage('Build Docker Image') {
             steps {
                 echo "Building Docker Image"
-                sh "docker build -t ${IMAGE_NAME}:latest ."
+                sh 'docker build -t capstone1-webapp:latest .'
             }
         }
+    }
 
-        stage('Test') {
-            steps {
-                echo "Testing Application"
-                sh "docker run --rm ${IMAGE_NAME}:latest ls /var/www/html"
-            }
-        }
+    post {
+        success {
+            script {
+                echo "Build successful. Triggering Test job."
+                build job: 'capstone1-test'
 
-        stage('Prod') {
-            when {
-                branch 'master'
-            }
-            steps {
-                echo "Deploying to Production"
-                sh '''
-                docker rm -f capstone1-prod || true
-                docker run -d --name capstone1-prod -p 80:80 capstone1-webapp:latest
-                '''
+                if (env.BRANCH_NAME == 'master') {
+                    echo "Master branch detected. Triggering Prod job."
+                    build job: 'capstone1-prod'
+                } else {
+                    echo "Develop branch detected. Skipping Prod."
+                }
             }
         }
     }
