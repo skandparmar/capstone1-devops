@@ -16,7 +16,9 @@ pipeline {
                 echo "Build successful. Triggering Test job."
                 build job: 'capstone1-test'
 
-                if (env.BRANCH_NAME == 'master') {
+                echo "Git Branch: ${env.GIT_BRANCH}"
+
+                if (env.GIT_BRANCH.contains("master")) {
                     echo "Master branch detected. Triggering Prod job."
                     build job: 'capstone1-prod'
                 } else {
